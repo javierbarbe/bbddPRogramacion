@@ -35,8 +35,8 @@ public class InsertaRegistroDatosPersonales {
 					//"jdbc:mysql://localhost/javi user=root&password=";
 			Connection con = DriverManager.getConnection(connection);
 			Statement s= con.createStatement();
-			s.executeUpdate("insert into datospersonales (DNI, Nombre, Apellido, Edad) values ("+dni +","+nombre.toString()+","
-			+apellido.toString()+","+ edad+")");
+			s.executeUpdate("insert into datospersonales (DNI, Nombre, Apellido, Edad) values ('"+dni +"','"+nombre.toString()+"','"
+			+apellido.toString()+"','"+ edad+"')");
 			con.close();
 			s.close();
 			
