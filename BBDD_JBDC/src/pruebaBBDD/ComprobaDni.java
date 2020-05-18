@@ -9,6 +9,10 @@ public class ComprobaDni {
 	protected boolean isDniok() {
 		return dniok;
 	}
+	String dni2;
+	public String getDni2() {
+		return dni2;
+	}
 	public ComprobaDni() {
 		
 		String terminacion="TRWAGMYFPDXBNJZSQVHLCKE";
@@ -35,10 +39,12 @@ public class ComprobaDni {
 //			System.out.println(correspondiente);
 			if (correspondiente==letra) {
 				dniok=true;
+				dni2=dni;
 //				System.out.println("todo correcto");
 			}
 			else if(correspondiente==letra2){
 				dniok=true;
+				dni2=dni;
 //				System.out.println("todo correcto");
 			}
 			
