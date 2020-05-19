@@ -10,6 +10,8 @@ import java.util.Scanner;
 
 
 
+
+
 public class EliminaRegistro {
 
 	public static void main(String[] args) {
@@ -26,7 +28,8 @@ public class EliminaRegistro {
 		while (!opc) {
 			try {
 				opcion = sc.nextInt();
-				opc = true;			
+				opc = true;		
+				
 			} catch (InputMismatchException e) {
 				System.out.println("No es un numero lo introducido");
 				System.out.println("Introduce un numero par favar");
