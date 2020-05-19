@@ -16,6 +16,13 @@ public class EliminaRegistro {
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			System.out.println(e1.getMessage());
+		}
 		
 		boolean opc = false;
 		int opcion=0;

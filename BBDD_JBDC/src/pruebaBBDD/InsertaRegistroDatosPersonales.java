@@ -14,6 +14,13 @@ import java.util.regex.Pattern;
 public class InsertaRegistroDatosPersonales {
 
 	public static void main(String[] args) {
+		try {
+			Class.forName("com.mysql.jdbc.Driver");
+		} catch (ClassNotFoundException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+			System.out.println(e1.getMessage());
+		}
 		Scanner sc = new Scanner(System.in);
 		System.out.println("Bienvenido al gestor la base de datos DatosPersonales");
 		System.out.println("Introduciremos los siguientes datos DNI,NOMBRE, APELLIDO,EDAD");
