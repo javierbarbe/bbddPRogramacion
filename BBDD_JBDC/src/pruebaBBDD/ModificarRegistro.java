@@ -7,6 +7,10 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Scanner;
 
+import javax.swing.JOptionPane;
+
+
+
 public class ModificarRegistro {
 
 	public static void main(String[] args) {
@@ -19,7 +23,7 @@ public class ModificarRegistro {
 			System.out.println(e1.getMessage());
 		}
 		Scanner sc = new Scanner(System.in);
-
+		String hola = JOptionPane.showInputDialog("damelo papi");
 
 		String conexion = "jdbc:mysql://localhost/bd1?user=root&password=?useLegacyDatetimeCode=false&serverTimezone=UTC";
 		try {
@@ -52,7 +56,7 @@ public class ModificarRegistro {
 
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println(e.getErrorCode()+ " codigo de error");
 			System.out.println(e.getMessage());
 		}
 
