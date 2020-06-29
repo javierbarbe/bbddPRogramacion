@@ -1,0 +1,229 @@
+-------------------------------------------------------------------------
+ICMP (Internet Control Message Protocol)
+-------------------------------------------------------------------------
+la capa de red a parte de encaminar datagramas, se encarga de diagnosticar
+si los datagramas llegan bien al destino; si no llegan, el protocolo encargado de informar de la causa del fallo es ICMP !!!SOLO INFORMA, NO SOLUCINA EL PROBLEMA!! 
+el encargado el encargado de solucionar el problema de la entrega de datagramas sera la capa superior de transporte
+
+ICMP añade una cabecera extra de 8-bytes minimo a la cabacera IP:
+
+ ------------------------------------
+  cabecera  |  cabecera |   datos a
+    ip             |   icmp        |   mandar
+-------------------------------------
+   20bytes      8bytes     
+     min          min      ( ver foto cabecera-ICMP )
+
+
+1 byte Tipo de mensaje ICMP
+        1 byte Codigo de mensaje ICMP en funcion del tipo
+        2 bytes Checksum cabecera ICMP (hash del cabecera)
+        4 bytes datos-icmp en funcion del tipo mensaje ICMP
+
+los tipos de mensajes q mas se usan a nivel de diagnostico en una red
+son los mensajes de tipo:  ECHO-REQUEST y ECHO-REPLY
+el mensaje icmp echo-request lo q hace es solicitar a un  host-destino
+q responda a esta solicitud icmp con un mensaje icmp de tipo echo-reply.
+Si el host de destino esta conectado, respondera con este tipo de mensaje
+icmp y sino con un mensaje icmp de destino inalcanzable: HOST-UNREACHABLE
+
+cabecera ICMP para mensajes de tipo ECHO-REQUEST/REPLY
+
+    0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |     Tipo      |    Código     |        Suma de Control        |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+   |        Identificador          |     Número de Secuencia       |
+   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+
+     1 byte TIPO=8 echo-request, 0 echo-repy
+    1 byte CODIGO=0
+    2 bytes SUMA DE CONTROL
+    2 bytes Identificador = suele ser 0
+    2 bytes SEQ = (no tiene por que coincidir con el SEQ de la cab.ip
+            y se emplea para emparejar peticiones de ECHO con
+            respuetas de ECHO)
+
+        se suele utilizar este SEQ para diagnosticar problemas de
+        red entre emisor <----> receptor, pq si el emisor manda
+        varias peticiones de ECHO y no recibe respuestas a todas
+        quiere decir q la red esta siendo sobrecargada (si recibe
+        100% de respuestas, la comunicacion entre ambas es fluida)
+
+---------------
+emisor   ------- router -----> router2 ----->.....    rotuer ---------------------> receptor ¿¿activo??
+el emisor mandar paquetes icmp echo request
+sonda-1 echo-request ----> (espero respuesta en 1s)
+sonda-2 echo-request ----> (espero respuesta en 1s)
+....
+
+cuando llega al receptor:
+< ----------------------------------------- sonda-respuesta-1-echo reply
+<----------------------------------------- sonda-respuesta-2-echo-reply
+el equipo receptor esta ALIVE
+
+¿q ocurre si en ese 1s de espera por sonda no recibe las respuestas??
+ESTO NO QUIERE DECIR QUE EL EQUIPO RECEPTOR este apagado!!!
+puede ser el trafico entre los diferentes ROUTERS hasta llegar al receptor sea myuy alto y no se entreguen a tiempo
+con lo q el receptor tarda en responder
+
+------------------------ COMANDOS PARA MANEJAR ICMP ------------------
+1º) el comando PING ==> mandar sondas icmp de tipo echo-request a un destinatario
+sirve tambien para diagnosticar el estado de la red entre emisor y receptor
+opciones:
+
+        -n <------------------------muestra ips, no nombres, es
+                    mas rapido pq no se consulta DNS
+        -c num_icmp_echo_request <--numero de sondas icmp
+        -t num_TTL <----------------numero de hops(routers) q
+                    puede atravesar la sonda antes de
+                    descartarse
+
+        -I nom_tarjeta <--------- nombre de tarjeta por la q vas
+                    a mandar sondas echo-request
+
+        -s tamaño_paquete <------ num.de bytes a mandar como datos
+                    (sin contar cabeceras)
+                       tamaño max.datagrama=65535
+                    descuentas 20 bytes cab.ip
+                           8 bytes cab.icmp
+                    el max.datos:
+
+                        65535-28=65507bytes
+
+
+        -i intervalo_entre_peticiones <------ si no lo pones,no 
+                        se manda otra sonda hasta
+                        q no se recibe respuesta
+                        de la recien mandada;
+
+                        si lo pones, se mandan sond
+                        indep.si se recibe respuest
+
+                        (como root puedes poner 0)
+
+---------------------------- PRACTICA ---------------------------
+lanzar el wireshark (como root) ---> seleccionais la tarjeta por la cual os conectais al router
+pulsais el boton cuadrado rojo [] <---paramos el interceptar paquetes
+en la caja de texto de filtro poneis "icmp"
+y pulsais el boton azul de la aleta de tiburon <---- iniciar nueva captura pero ahora de solo el trafico ICMP
+vais a una consola:
+ping -c 1  www.google.es
+
+--------------
+estas en tu casa y no tienes "internet" (conexion de puertas para fuera, intentas navegar y no puedes)
+¿q haces?
+
+1º) tienes q ver en tu equipo si tu tarjeta de red esta reconocida por el sistema y tiene parametros de red asignados (tiene una ip de red, mascara correcta, 
+y asignada en la tabla de enrutamiento una ruta hacia el router)
+
+2º) si esta ok, hay q testear la tarjeta de red para ver si funciona bien....¿¿como lo haces?? 
+mandas sondas ICMP de tipo echo-request a tu propia tarjeta <=== haces ping a la ip de tu tarjeta
+
+3º) si hay respuesta con mensajes de echo-reply ok, es q los paquetes puede q no lleguen al ROUTER q es el q se encarga de mandarlos fuera....¿¿como testeas el router??
+ mandas sondas ICMP de tipo echo-request al ROUTER <=== haces ping a la ip del router
+
+4º) si no llegan (HOST-UNREACHABLE) no quiere decir q el rotuer este apagado, te acercas al router y miras si esta encendido o no. 
+Si esta encendido, puede ser q el cable q conecta el equipo con el rotuer este roto, si esta el cable bien, puede ser q el router haya q reiniciarlo.
+si ya te contesta OK, el trafico en tu red funciona perfectamente, lo q no funciona es de puertas para fuera...
+
+5º) testear si el problema es por DNS <=== haces solicitudes ICMP de tipo echo-request a una IP externa, p.e
+ping 8.8.8.8 <==== si te da OK, el problema de q tienes mal configurado los DNS en tu maquina (o ni siquiera los tienes configurados)
+como DNS siempre pongo: 8.8.8.8    y  el   8.8.4.4
+si el ping ya fallase, entonces si es problema de la red externa (llamar al proveedor)
+
+
+---------------------------------
+otra de las utilidadesd el comando ping es ver los router por los cuales van a atravesar los paquetes al llegar a un receptor
+¿como se hace eso? manejando el TTL de la sonda echo-reuquest
+
+1º mando una sonda con ttl=1, q llegara al primer router, desontara en uno el campo ttl de la cabecera IP y como es 0, no lo sigue redirigiendo y manda un mensaje ICMP
+al emisor de TIME EXCEEDED, con la ip del rotuer <--- ya tengo el primer rotuer
+
+2º mando una sonda con ttl=2, llegara al primero router, descuenta en uno el ttl, la pasa al segundo router, descuentoa el campo ttl de la cabecerea ipo en uno,
+ y como es 0, no lo sigue redirigiendo y manda un mensaje ICMPO al emisor de TIME EXCEED con la ip del segundo router <---- ya tengo el segundo router
+......
+hasta llegar al destino
+ej: routers q se atraviesan antes de llegar a google.es:
+ping -c 1 -t 1 www.google.es <----1º sonda ttl=1
+ping -c 1 -t 2 www.google.es <----1º sonda ttl=2
+....
+(el maximo valor del ttl era de 255 por el campo de 1 byte q habia en la cabecera ip para el TTL)
+
+
+-----------------
+esto q  hemos hecho lo hace de forma automatica el comando traceroute (instalarlo con : apt install traceroute)
+lo q hace este comando es mandar en vez de 1 sonda icmp echo-request con ttl incrementandose en 1 manda 3
+
+traceroute [OPTION...] HOST
+
+Print the route packets trace to network host.
+
+  -f, --first-hop=NUM        set initial hop distance, i.e., time-to-live
+  -g, --gateways=GATES       list of gateways for loose source routing
+  -I, --icmp                 use ICMP ECHO as probe
+  -m, --max-hop=NUM          set maximal hop count (default: 64)
+  -M, --type=METHOD          use METHOD (icmp' or udp') for traceroute
+                             operations, defaulting to `udp'
+  -p, --port=PORT            use destination PORT port (default: 33434)
+  -q, --tries=NUM            send NUM probe packets per hop (default: 3)
+      --resolve-hostnames    resolve hostnames
+  -t, --tos=NUM              set type of service (TOS) to NUM
+  -w, --wait=NUM             wait NUM seconds for response (default: 3)
+  -?, --help                 give this help list
+      --usage                give a short usage message
+  -V, --version              print program versio
+
+ej:   traceroute www.google.es
+
+neo__@neo-AcerAspire:~$ traceroute www.google.es
+
+traceroute to www.google.es (216.58.201.163), 64 hops max
+  1   192.168.1.1  1,922ms  2,581ms  5,517ms 
+  2   *  *  * 
+  3   *  *  * 
+  4   *  81.46.0.22  3,898ms  3,800ms 
+  5   81.46.0.17  6,425ms  4,902ms  5,979ms 
+  6   176.52.253.97  5,851ms  4,614ms  5,347ms 
+  7   72.14.211.154  4,551ms  4,938ms  4,952ms 
+  8   108.170.253.225  5,554ms  5,658ms  5,129ms 
+  9   74.125.242.177  10,849ms  10,935ms  12,032ms 
+ 10   216.58.201.163  5,067ms  4,928ms  5,153ms
+
+un * indica q la sonda icmp echo -request se da por perdida (no ha llegado la coreepondiente ehcho -reply)
+esto no indica q ese router este caido
+puedes incrementear el tiempol de espera por sonda con la opcion -w
+
+
+-------------------------------------------------
+purebas de stress por ICMP:
+- incrementando el tamaño del paquete al maximo: 65507 bytes (el tamaño maximo de un paquete ip 65535 bytes - 20 bytes de la cabecera ip - 8 bytes de la cabecera icmp)
+- disminyuendo el tiempo de espera por sonda
+- y mandando infinitas sondas desde varios equipos
+ataques DoS por flood icmmp
+icmp
+el comando ping tiene una opcion q es -f <--- flood echo request:
+
+ping  -s 65507   -f   -i 0.1   ip_equipo
+
+
+--------------------------------- CAPA DE TRANSPORTE ---------------------
+la capa transporte usa circuitos virtuales de comunicacion entre emisor-receptor, llamados SOCKETS
+un socket se caracteriza por estos parametros:  IP-emisor + puerto-emisor   --------------> IP-receptor + puerto-receptor
+
+( ver foto cabecera_TCP)
+
+PUERTO DE ORIGEN: nº de 16 bits que especifica el puerto de origen de los datos; cuando la máquina receptora responde utilizará este nº como puerto de destino para la respuesta.
+
+PUERTO DE DESTINO: nº de 16 bits que especifica el número de puerto del dispositivo receptor al que van dirigidos los datos.
+el maximo valor q puede tener un puerto es los dos bytes q representan el campo puestos a 1:
+11111111 111111111
+-------- -------- = 2^16 = 65535
+el rango de puertos posibles abiertos en una maquina va del 1 al 65535
+hay puertos q estan reservados para el uso de determinadas aplicaciones:
+ puerto q usan apliaciones web http ---> 80
+puerto q usan las aplicaciones de correo:
+   para mandar correos smtp ---> 225
+el 25
+para recibir correos pop3 ---> 110
+¿¿ donde estan definidos estos puertos reservados?? todos los sistemas operativos tienen un fichero donde vienen establecidos ?? ====>  /etc/services

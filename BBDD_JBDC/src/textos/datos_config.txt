@@ -1,0 +1,2 @@
+jdbc:mysql://localhost/bd1?user=root&password?useLegacyDatetimeCode=false&serverTimezone=UTC
+root
